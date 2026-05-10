@@ -181,15 +181,18 @@ async function getWhoIsOnLeave() {
           )
         )
         OR
-        -- ساعتی: امروز روز مرخصی باشد
+        -- ساعتی: امروز روز مرخصی باشد و ساعت در بازه مرخصی باشد
         (
           lr.leave_type = 'hourly'
           AND lr.leave_date = ?
+          AND lr.start_time <= ?
+          AND lr.end_time   >= ?
         )
       )
     ORDER BY lr.leave_type DESC, u.first_name
   `;
-  const [rows] = await pool.execute(sql, [today, today, today, today]);
+  const nowTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const [rows] = await pool.execute(sql, [today, today, today, today, nowTime, nowTime]);
   return rows;
 }
 
