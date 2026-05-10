@@ -185,14 +185,13 @@ async function getWhoIsOnLeave() {
         (
           lr.leave_type = 'hourly'
           AND lr.leave_date = ?
-          AND lr.start_time <= ?
-          AND lr.end_time   >= ?
+          AND lr.start_time <= CURTIME()
+          AND lr.end_time   >= CURTIME()
         )
       )
     ORDER BY lr.leave_type DESC, u.first_name
   `;
-  const nowTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  const [rows] = await pool.execute(sql, [today, today, today, today, nowTime, nowTime]);
+  const [rows] = await pool.execute(sql, [today, today, today, today]);
   return rows;
 }
 
