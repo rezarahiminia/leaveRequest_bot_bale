@@ -139,6 +139,55 @@ async function updateLeaveStatus(leaveId, status) {
   return result.affectedRows > 0;
 }
 
+/**
+ * Return all users who are currently on leave right now.
+ *
+ * Daily leave:  leave_date <= TODAY  AND  leave_date + days > TODAY
+ *               (if days is NULL, only today counts)
+ * Hourly leave: leave_date = TODAY   AND  start_time <= NOW()  AND  end_time >= NOW()
+ */
+async function getWhoIsOnLeave() {
+  const sql = `
+    SELECT
+      u.first_name,
+      u.last_name,
+      u.username,
+      u.phone,
+      lr.leave_type,
+      lr.leave_date,
+      lr.leave_date_shamsi,
+      lr.start_time,
+      lr.end_time,
+      lr.hours,
+      lr.days
+    FROM leave_requests lr
+    JOIN users u ON u.user_id = lr.user_id
+    WHERE lr.status != 'rejected'
+      AND (
+        -- روزانه: امروز در بازه مرخصی باشد
+        (
+          lr.leave_type = 'daily'
+          AND lr.leave_date <= CURDATE()
+          AND (
+            (lr.days IS NOT NULL AND DATE_ADD(lr.leave_date, INTERVAL lr.days DAY) > CURDATE())
+            OR (lr.days IS NULL AND lr.leave_date = CURDATE())
+          )
+        )
+        OR
+        -- ساعتی: امروز و ساعت فعلی در بازه مرخصی باشد
+        (
+          lr.leave_type = 'hourly'
+          AND lr.leave_date = CURDATE()
+          AND lr.start_time <= CURTIME()
+          AND lr.end_time >= CURTIME()
+        )
+      )
+    ORDER BY lr.leave_type DESC, u.first_name
+  `;
+  const [rows] = await pool.execute(sql);
+  return rows;
+}
+
 module.exports = {
   pool,
   testConnection,
@@ -148,4 +197,5 @@ module.exports = {
   getUserLeaveRequests,
   getUserLeaveSummary,
   updateLeaveStatus,
+  getWhoIsOnLeave,
 };

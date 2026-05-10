@@ -21,6 +21,7 @@ const { handleDailyCommand, handleDailyConversation }   = require('./daily');
 const { handleListCommand }    = require('./list');
 const { handleSummaryCommand } = require('./summary');
 const { handleCancel }         = require('./cancel');
+const { handleOnLeaveCommand } = require('./onleave');
 
 // Text of keyboard buttons → command handler mapping
 const BUTTON_MAP = {
@@ -28,6 +29,7 @@ const BUTTON_MAP = {
   '📅 مرخصی روزانه': handleDailyCommand,
   '📋 لیست مرخصی‌ها': handleListCommand,
   '📊 خلاصه':         handleSummaryCommand,
+  '🔴 افراد در مرخصی': handleOnLeaveCommand,
 };
 
 // Slash command → handler mapping
@@ -38,6 +40,7 @@ const COMMAND_MAP = {
   '/daily':   handleDailyCommand,
   '/list':    handleListCommand,
   '/summary': handleSummaryCommand,
+  '/onleave': handleOnLeaveCommand,
   '/cancel':  handleCancel,
 };
 

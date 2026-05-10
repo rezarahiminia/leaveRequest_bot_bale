@@ -9,16 +9,18 @@ const { sendMessage, buildReplyKeyboard } = require('../utils/bot');
 const MAIN_MENU_KEYBOARD = buildReplyKeyboard([
   [{ text: '🕐 مرخصی ساعتی' }, { text: '📅 مرخصی روزانه' }],
   [{ text: '📋 لیست مرخصی‌ها' }, { text: '📊 خلاصه' }],
+  [{ text: '🔴 افراد در مرخصی' }],
 ]);
 
 async function sendMainMenu(chatId, firstName) {
   const greeting = `سلام ${firstName || 'کاربر'} عزیز!\n\n` +
     'به ربات ثبت مرخصی خوش آمدید.\n\n' +
-    '/hourly  — مرخصی ساعتی\n' +
-    '/daily   — مرخصی روزانه\n' +
-    '/list    — لیست مرخصی‌ها\n' +
-    '/summary — خلاصه آمار\n' +
-    '/help    — راهنما';
+    '/hourly   — مرخصی ساعتی\n' +
+    '/daily    — مرخصی روزانه\n' +
+    '/list     — لیست مرخصی‌ها\n' +
+    '/summary  — خلاصه آمار\n' +
+    '/onleave  — افراد در مرخصی الان\n' +
+    '/help     — راهنما';
 
   await sendMessage(chatId, greeting, MAIN_MENU_KEYBOARD);
 }

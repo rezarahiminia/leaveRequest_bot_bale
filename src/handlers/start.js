@@ -58,12 +58,13 @@ async function handleHelp(message) {
   await sendMessage(
     message.chat.id,
     'راهنمای دستورات:\n\n' +
-    '/start   — شروع / منوی اصلی\n' +
-    '/hourly  — ثبت مرخصی ساعتی (امروز)\n' +
-    '/daily   — ثبت مرخصی روزانه\n' +
-    '/list    — آخرین ۱۰ مرخصی\n' +
-    '/summary — آمار کلی مرخصی‌ها\n' +
-    '/cancel  — لغو عملیات جاری'
+    '/start    — شروع / منوی اصلی\n' +
+    '/hourly   — ثبت مرخصی ساعتی (امروز)\n' +
+    '/daily    — ثبت مرخصی روزانه\n' +
+    '/list     — آخرین ۱۰ مرخصی\n' +
+    '/summary  — آمار کلی مرخصی‌ها\n' +
+    '/onleave  — افرادی که الان در مرخصی هستند\n' +
+    '/cancel   — لغو عملیات جاری'
   );
 }
 
