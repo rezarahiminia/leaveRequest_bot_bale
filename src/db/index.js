@@ -144,9 +144,16 @@ async function updateLeaveStatus(leaveId, status) {
  *
  * Daily leave:  leave_date <= TODAY  AND  leave_date + days > TODAY
  *               (if days is NULL, only today counts)
- * Hourly leave: leave_date = TODAY   AND  start_time <= NOW()  AND  end_time >= NOW()
+ * Hourly leave: leave_date = TODAY
+ *               (time comparison is skipped to avoid server timezone issues;
+ *                the leave_date alone is enough to mark someone as on leave today)
  */
 async function getWhoIsOnLeave() {
+  // Use Node.js local time so timezone is consistent with the application.
+  const now   = new Date();
+  const pad   = (n) => String(n).padStart(2, '0');
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
   const sql = `
     SELECT
       u.first_name,
@@ -167,24 +174,22 @@ async function getWhoIsOnLeave() {
         -- روزانه: امروز در بازه مرخصی باشد
         (
           lr.leave_type = 'daily'
-          AND lr.leave_date <= CURDATE()
+          AND lr.leave_date <= ?
           AND (
-            (lr.days IS NOT NULL AND DATE_ADD(lr.leave_date, INTERVAL lr.days DAY) > CURDATE())
-            OR (lr.days IS NULL AND lr.leave_date = CURDATE())
+            (lr.days IS NOT NULL AND DATE_ADD(lr.leave_date, INTERVAL lr.days DAY) > ?)
+            OR (lr.days IS NULL AND lr.leave_date = ?)
           )
         )
         OR
-        -- ساعتی: امروز و ساعت فعلی در بازه مرخصی باشد
+        -- ساعتی: امروز روز مرخصی باشد
         (
           lr.leave_type = 'hourly'
-          AND lr.leave_date = CURDATE()
-          AND lr.start_time <= CURTIME()
-          AND lr.end_time >= CURTIME()
+          AND lr.leave_date = ?
         )
       )
     ORDER BY lr.leave_type DESC, u.first_name
   `;
-  const [rows] = await pool.execute(sql);
+  const [rows] = await pool.execute(sql, [today, today, today, today]);
   return rows;
 }
 
