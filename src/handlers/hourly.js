@@ -12,7 +12,7 @@
 const db        = require('../db');
 const sessions  = require('../sessions');
 const { sendMessage, notifyGroup } = require('../utils/bot');
-const { todayGregorianStr, todayJalaliStr } = require('../utils/date');
+const { todayGregorianStr, todayJalaliStr, toEnDigits } = require('../utils/date');
 const { getDisplayName } = require('./helpers');
 const { LEAVE } = require('../config');
 
@@ -58,12 +58,13 @@ async function handleHourlyConversation(message, session) {
 }
 
 async function _stepStartTime(from, chat, text, session) {
-  if (!/^\d{2}:\d{2}$/.test(text)) {
+  const normalized = toEnDigits(text);
+  if (!/^\d{2}:\d{2}$/.test(normalized)) {
     await sendMessage(chat.id, 'فرمت ساعت نامعتبر است.\nمثال: 09:30');
     return;
   }
 
-  session.data.start_time = text;
+  session.data.start_time = normalized;
   session.step = 'duration';
   sessions.set(from.id, session);
 
@@ -74,7 +75,7 @@ async function _stepStartTime(from, chat, text, session) {
 }
 
 async function _stepDuration(from, chat, text, session) {
-  const hours = parseFloat(text);
+  const hours = parseFloat(toEnDigits(text));
   if (isNaN(hours) || hours <= 0 || hours > LEAVE.MAX_HOURLY_HOURS) {
     await sendMessage(chat.id, `مقدار نامعتبر. عددی بین 0 تا ${LEAVE.MAX_HOURLY_HOURS} وارد کنید.`);
     return;

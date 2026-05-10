@@ -10,7 +10,7 @@
 const db        = require('../db');
 const sessions  = require('../sessions');
 const { sendMessage, notifyGroup } = require('../utils/bot');
-const { todayJalaliStr, parseJalaliInput, jalaliToGregorian, formatJalali } = require('../utils/date');
+const { todayJalaliStr, parseJalaliInput, jalaliToGregorian, formatJalali, toEnDigits } = require('../utils/date');
 const { getDisplayName } = require('./helpers');
 const { LEAVE } = require('../config');
 
@@ -89,7 +89,7 @@ async function _stepStartDate(from, chat, text, session) {
 }
 
 async function _stepDays(from, chat, text, session) {
-  const days = parseFloat(text);
+  const days = parseFloat(toEnDigits(text));
   if (isNaN(days) || days <= 0 || days > LEAVE.MAX_DAILY_DAYS) {
     await sendMessage(
       chat.id,

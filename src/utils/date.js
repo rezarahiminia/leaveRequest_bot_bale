@@ -18,6 +18,21 @@ const MONTH_NAMES_FA = [
 // ─── Conversion helpers ────────────────────────────────────────────────────
 
 /**
+ * Convert Persian (۰-۹) and Arabic-Indic (٠-٩) digits to ASCII digits.
+ * Also replaces Arabic decimal separator (٫) with dot.
+ * Safe to call on strings that are already ASCII.
+ *
+ * @param {string} str
+ * @returns {string}
+ */
+function toEnDigits(str) {
+  return String(str)
+    .replace(/[۰-۹]/g, (d) => d.charCodeAt(0) - 0x06f0)
+    .replace(/[٠-٩]/g, (d) => d.charCodeAt(0) - 0x0660)
+    .replace(/٫/g, '.');
+}
+
+/**
  * Convert a Gregorian date string (YYYY-MM-DD) to a human-readable
  * Jalali string like "19 اردیبهشت 1405".
  */
@@ -64,11 +79,12 @@ function todayGregorianStr() {
  * Returns { jy, jm, jd } or throws on invalid input.
  */
 function parseJalaliInput(text) {
-  const parts = text.trim().split('/').map(Number);
+  const normalized = toEnDigits(text.trim());
+  const parts = normalized.split('/').map(Number);
   if (parts.length !== 3 || parts.some(isNaN)) throw new Error('invalid format');
   const [jy, jm, jd] = parts;
   if (jm < 1 || jm > 12 || jd < 1 || jd > 31) throw new Error('out of range');
   return { jy, jm, jd };
 }
 
-module.exports = { gregorianToJalaliStr, jalaliToGregorian, formatJalali, todayJalaliStr, todayGregorianStr, parseJalaliInput };
+module.exports = { gregorianToJalaliStr, jalaliToGregorian, formatJalali, todayJalaliStr, todayGregorianStr, parseJalaliInput, toEnDigits };
