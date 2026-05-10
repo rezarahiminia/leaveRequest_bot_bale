@@ -101,7 +101,7 @@ async function getUserLeaveRequests(userId, limit = 10) {
     ORDER BY created_at DESC
     LIMIT ?
   `;
-  const [rows] = await pool.execute(sql, [userId, limit]);
+  const [rows] = await pool.execute(sql, [userId, Number(limit)]);
   return rows;
 }
 
