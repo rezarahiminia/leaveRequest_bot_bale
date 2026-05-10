@@ -45,6 +45,10 @@ const COMMAND_MAP = {
 };
 
 async function handleMessage(message) {
+  // Only respond to private chats — group messages are ignored.
+  // (The bot still sends notifications TO groups, but never reads from them.)
+  if (message.chat.type !== 'private') return;
+
   // 1. Contact share
   if (message.contact) {
     return await handleContact(message);
