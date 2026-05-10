@@ -93,15 +93,18 @@ async function createLeaveRequest(userId, leaveData) {
  * Return the last `limit` leave requests for a user, newest first.
  */
 async function getUserLeaveRequests(userId, limit = 10) {
+  // LIMIT cannot be a bound parameter in MariaDB prepared statements,
+  // so we embed it directly. The value is always an internal integer constant.
+  const safeLimit = Math.max(1, Math.min(100, parseInt(limit, 10) || 10));
   const sql = `
     SELECT id, leave_type, leave_date, leave_date_shamsi,
            start_time, end_time, hours, days, status, created_at
     FROM leave_requests
     WHERE user_id = ?
     ORDER BY created_at DESC
-    LIMIT ?
+    LIMIT ${safeLimit}
   `;
-  const [rows] = await pool.execute(sql, [userId, Number(limit)]);
+  const [rows] = await pool.execute(sql, [userId]);
   return rows;
 }
 
