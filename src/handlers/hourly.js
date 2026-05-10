@@ -11,7 +11,7 @@
 
 const db        = require('../db');
 const sessions  = require('../sessions');
-const { sendMessage } = require('../utils/bot');
+const { sendMessage, notifyGroup } = require('../utils/bot');
 const { todayGregorianStr, todayJalaliStr } = require('../utils/date');
 const { getDisplayName } = require('./helpers');
 const { LEAVE } = require('../config');
@@ -101,15 +101,16 @@ async function _stepDuration(from, chat, text, session) {
   sessions.del(from.id);
 
   const name = getDisplayName(from);
-  await sendMessage(
-    chat.id,
+  const receipt =
     '✅ مرخصی ساعتی ثبت شد!\n\n' +
     `👤 نام: ${name}\n` +
     `📅 تاریخ: ${leave_date_shamsi}\n` +
     `🕐 از: ${start_time}  تا: ${end_time}\n` +
     `⏱ مدت: ${hours} ساعت\n\n` +
-    `🆔 شناسه: ${leaveId}`
-  );
+    `🆔 شناسه: ${leaveId}`;
+
+  await sendMessage(chat.id, receipt);
+  await notifyGroup('🔔 مرخصی جدید ثبت شد\n\n' + receipt);
 }
 
 module.exports = { handleHourlyCommand, handleHourlyConversation };

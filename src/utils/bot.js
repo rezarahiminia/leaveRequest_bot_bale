@@ -89,4 +89,19 @@ function buildReplyKeyboard(rows) {
   return { keyboard: rows, resize_keyboard: true, one_time_keyboard: true };
 }
 
-module.exports = { sendMessage, editMessageReplyMarkup, answerCallbackQuery, getMe, getUpdates, buildReplyKeyboard };
+/**
+ * Send a leave notification to the configured group chat.
+ * Does nothing if GROUP_CHAT_ID is not set in .env.
+ * Errors are swallowed so a group send failure never breaks the user flow.
+ */
+async function notifyGroup(text) {
+  const { GROUP_CHAT_ID } = require('../config');
+  if (!GROUP_CHAT_ID) return;
+  try {
+    await apiPost('sendMessage', { chat_id: GROUP_CHAT_ID, text });
+  } catch (err) {
+    logger.warn('Failed to send group notification', { message: err.message });
+  }
+}
+
+module.exports = { sendMessage, editMessageReplyMarkup, answerCallbackQuery, getMe, getUpdates, buildReplyKeyboard, notifyGroup };

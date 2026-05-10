@@ -9,7 +9,7 @@
 
 const db        = require('../db');
 const sessions  = require('../sessions');
-const { sendMessage } = require('../utils/bot');
+const { sendMessage, notifyGroup } = require('../utils/bot');
 const { todayJalaliStr, parseJalaliInput, jalaliToGregorian, formatJalali } = require('../utils/date');
 const { getDisplayName } = require('./helpers');
 const { LEAVE } = require('../config');
@@ -110,14 +110,15 @@ async function _stepDays(from, chat, text, session) {
   sessions.del(from.id);
 
   const name = getDisplayName(from);
-  await sendMessage(
-    chat.id,
+  const receipt =
     '✅ مرخصی روزانه ثبت شد!\n\n' +
     `👤 نام: ${name}\n` +
     `📅 از تاریخ: ${leave_date_shamsi}\n` +
     `📆 تعداد روز: ${days}\n\n` +
-    `🆔 شناسه: ${leaveId}`
-  );
+    `🆔 شناسه: ${leaveId}`;
+
+  await sendMessage(chat.id, receipt);
+  await notifyGroup('🔔 مرخصی جدید ثبت شد\n\n' + receipt);
 }
 
 module.exports = { handleDailyCommand, handleDailyConversation };

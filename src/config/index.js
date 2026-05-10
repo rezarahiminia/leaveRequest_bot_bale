@@ -36,4 +36,9 @@ const LEAVE = {
   LIST_LIMIT: 10,
 };
 
-module.exports = { BOT_TOKEN, API_BASE_URL, POLLING_TIMEOUT, POLLING_RETRY_DELAY, DB, LEAVE };
+// ─── Group notifications ───────────────────────────────────────────────────
+// Set GROUP_CHAT_ID in .env to enable leave notifications in a group.
+// Leave empty to disable group notifications.
+const GROUP_CHAT_ID = process.env.GROUP_CHAT_ID || null;
+
+module.exports = { BOT_TOKEN, API_BASE_URL, POLLING_TIMEOUT, POLLING_RETRY_DELAY, DB, LEAVE, GROUP_CHAT_ID };
