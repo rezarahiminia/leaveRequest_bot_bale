@@ -11,10 +11,10 @@
 
 const db        = require('../db');
 const sessions  = require('../sessions');
-const { sendMessage, notifyGroup } = require('../utils/bot');
+const { sendMessage, notifyGroup, sendInvoice } = require('../utils/bot');
 const { todayGregorianStr, todayJalaliStr, toEnDigits } = require('../utils/date');
 const { getDisplayName } = require('./helpers');
-const { LEAVE } = require('../config');
+const { LEAVE, WALLET } = require('../config');
 
 // ─── Flow start ────────────────────────────────────────────────────────────
 
@@ -99,10 +99,8 @@ async function _stepDuration(from, chat, text, session) {
     hours:             hours.toFixed(2),
   });
 
-  sessions.del(from.id);
-
   const name = getDisplayName(from);
-  const receipt =
+  const receiptText =
     '✅ مرخصی ساعتی ثبت شد!\n\n' +
     `👤 نام: ${name}\n` +
     `📅 تاریخ: ${leave_date_shamsi}\n` +
@@ -110,8 +108,28 @@ async function _stepDuration(from, chat, text, session) {
     `⏱ مدت: ${hours} ساعت\n\n` +
     `🆔 شناسه: ${leaveId}`;
 
-  await sendMessage(chat.id, receipt);
-  await notifyGroup('🔔 مرخصی جدید ثبت شد\n\n' + receipt);
+  if (WALLET.ENABLED) {
+    // Keep session alive waiting for payment confirmation
+    session.step = 'awaiting_payment';
+    session.data.leaveId      = leaveId;
+    session.data.receipt_text = receiptText;
+    sessions.set(from.id, session);
+
+    const totalPrice  = Math.round(WALLET.HOURLY_PRICE * hours);
+    const amountToman = Math.round(totalPrice / 10).toLocaleString();
+    await sendInvoice(
+      chat.id,
+      'پرداخت مرخصی ساعتی',
+      `مرخصی ساعتی — ${leave_date_shamsi} — ${hours} ساعت`,
+      `hourly:${leaveId}`,
+      [{ label: `کارمزد مرخصی ساعتی ${hours} ساعت (${amountToman} تومان)`, amount: totalPrice }]
+    );
+  } else {
+    await db.updateLeaveStatus(leaveId, 'approved');
+    sessions.del(from.id);
+    await sendMessage(chat.id, receiptText);
+    await notifyGroup('🔔 مرخصی جدید ثبت شد\n\n' + receiptText);
+  }
 }
 
 module.exports = { handleHourlyCommand, handleHourlyConversation };

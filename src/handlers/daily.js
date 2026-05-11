@@ -9,10 +9,10 @@
 
 const db        = require('../db');
 const sessions  = require('../sessions');
-const { sendMessage, notifyGroup } = require('../utils/bot');
+const { sendMessage, notifyGroup, sendInvoice } = require('../utils/bot');
 const { todayJalaliStr, parseJalaliInput, jalaliToGregorian, formatJalali, toEnDigits } = require('../utils/date');
 const { getDisplayName } = require('./helpers');
-const { LEAVE } = require('../config');
+const { LEAVE, WALLET } = require('../config');
 
 // ─── Flow start ────────────────────────────────────────────────────────────
 
@@ -107,18 +107,36 @@ async function _stepDays(from, chat, text, session) {
     days,
   });
 
-  sessions.del(from.id);
-
   const name = getDisplayName(from);
-  const receipt =
+  const receiptText =
     '✅ مرخصی روزانه ثبت شد!\n\n' +
     `👤 نام: ${name}\n` +
     `📅 از تاریخ: ${leave_date_shamsi}\n` +
     `📆 تعداد روز: ${days}\n\n` +
     `🆔 شناسه: ${leaveId}`;
 
-  await sendMessage(chat.id, receipt);
-  await notifyGroup('🔔 مرخصی جدید ثبت شد\n\n' + receipt);
+  if (WALLET.ENABLED) {
+    // Keep session alive waiting for payment confirmation
+    session.step = 'awaiting_payment';
+    session.data.leaveId      = leaveId;
+    session.data.receipt_text = receiptText;
+    sessions.set(from.id, session);
+
+    const totalPrice  = Math.round(WALLET.DAILY_PRICE * days);
+    const amountToman = Math.round(totalPrice / 10).toLocaleString();
+    await sendInvoice(
+      chat.id,
+      'پرداخت مرخصی روزانه',
+      `مرخصی روزانه — ${leave_date_shamsi} — ${days} روز`,
+      `daily:${leaveId}`,
+      [{ label: `کارمزد مرخصی روزانه ${days} روز (${amountToman} تومان)`, amount: totalPrice }]
+    );
+  } else {
+    await db.updateLeaveStatus(leaveId, 'approved');
+    sessions.del(from.id);
+    await sendMessage(chat.id, receiptText);
+    await notifyGroup('🔔 مرخصی جدید ثبت شد\n\n' + receiptText);
+  }
 }
 
 module.exports = { handleDailyCommand, handleDailyConversation };

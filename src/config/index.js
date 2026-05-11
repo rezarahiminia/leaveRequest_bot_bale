@@ -13,7 +13,7 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const API_BASE_URL = `https://tapi.bale.ai/bot${BOT_TOKEN}`;
 
 // ─── Polling ───────────────────────────────────────────────────────────────
-const POLLING_TIMEOUT = 30; // seconds (long-polling)
+const POLLING_TIMEOUT = 5; // seconds (short enough to catch pre_checkout_query within 10s deadline)
 const POLLING_RETRY_DELAY = 3000; // ms between retries on error
 
 // ─── Database ──────────────────────────────────────────────────────────────
@@ -41,4 +41,15 @@ const LEAVE = {
 // Leave empty to disable group notifications.
 const GROUP_CHAT_ID = process.env.GROUP_CHAT_ID || null;
 
-module.exports = { BOT_TOKEN, API_BASE_URL, POLLING_TIMEOUT, POLLING_RETRY_DELAY, DB, LEAVE, GROUP_CHAT_ID };
+// ─── Bale Wallet Payment ───────────────────────────────────────────────────
+// WALLET_ENABLED=true  → require payment before leave is confirmed
+// WALLET_TOKEN         → payment provider token from @botfather
+// Prices are in Rials (IRR); 10 Rials = 1 Toman
+const WALLET = {
+  ENABLED:      process.env.WALLET_ENABLED === 'true',
+  TOKEN:        process.env.WALLET_TOKEN   || '',
+  HOURLY_PRICE: Number(process.env.WALLET_HOURLY_PRICE) || 100000,   // 10,000 Toman
+  DAILY_PRICE:  Number(process.env.WALLET_DAILY_PRICE)  || 1000000,  // 100,000 Toman
+};
+
+module.exports = { BOT_TOKEN, API_BASE_URL, POLLING_TIMEOUT, POLLING_RETRY_DELAY, DB, LEAVE, GROUP_CHAT_ID, WALLET };

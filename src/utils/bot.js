@@ -17,7 +17,8 @@ async function apiPost(method, body) {
     const res = await axios.post(url, body);
     return res.data;
   } catch (err) {
-    logger.error(`Bale API [${method}] failed`, { message: err.message });
+    const detail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+    logger.error(`Bale API [${method}] failed`, { detail });
     throw err;
   }
 }
@@ -104,4 +105,40 @@ async function notifyGroup(text) {
   }
 }
 
-module.exports = { sendMessage, editMessageReplyMarkup, answerCallbackQuery, getMe, getUpdates, buildReplyKeyboard, notifyGroup };
+/**
+ * Send a payment invoice (درخواست پول) via Bale Wallet.
+ *
+ * @param {string|number} chatId
+ * @param {string} title         - product name (1-32 chars)
+ * @param {string} description   - product description (1-255 chars)
+ * @param {string} payload       - internal payload returned on successful payment (1-128 bytes)
+ * @param {Array<{label:string, amount:number}>} prices  - array of LabeledPrice (amount in Rials)
+ */
+async function sendInvoice(chatId, title, description, payload, prices) {
+  const { WALLET } = require('../config');
+  await apiPost('sendInvoice', {
+    chat_id:        chatId,
+    title,
+    description,
+    payload,
+    provider_token: WALLET.TOKEN,
+    currency:       'IRR',
+    prices,
+  });
+}
+
+/**
+ * Answer a pre-checkout query to approve or reject a pending payment.
+ * Must be called within 10 seconds of receiving the pre_checkout_query update.
+ *
+ * @param {string}  preCheckoutQueryId
+ * @param {boolean} ok           - true to approve, false to reject
+ * @param {string}  [errorMessage] - required when ok=false
+ */
+async function answerPreCheckoutQuery(preCheckoutQueryId, ok, errorMessage) {
+  const body = { pre_checkout_query_id: preCheckoutQueryId, ok };
+  if (!ok && errorMessage) body.error_message = errorMessage;
+  await apiPost('answerPreCheckoutQuery', body);
+}
+
+module.exports = { sendMessage, editMessageReplyMarkup, answerCallbackQuery, getMe, getUpdates, buildReplyKeyboard, notifyGroup, sendInvoice, answerPreCheckoutQuery };
